@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="module" src="functions/script.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Clima</title>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+    <header class="bg-black text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Weather App</h1>
+            <nav><button class="hover:underline">Inicio</button></nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Columna Izquierda-->
+        <div class="md:col-span-2 space-y-6">
+            <section id="search-section" class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Buscar Ciudad</h2>
+                <!-- Quitamos onclick del botón, lo manejaremos con submit del form -->
+                <form id="search-form" class="flex gap-2">
+                    <input type="text" id="city-input" placeholder="Ej: Madrid, Buenos Aires..." class="flex-grow border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition">Buscar</button>
+                </form>
+            </section>
+
+            <section id="current-weather" class="bg-white p-6 rounded-lg shadow hidden">
+               <!-- Contenido dinámico se llenará aquí -->
+            </section>
+
+            <section id="forecast" class="bg-white p-6 rounded-lg shadow hidden">
+                <h2 class="text-xl font-semibold mb-4">Pronóstico 5 Días</h2>
+                <div id="forecast-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <!-- Cards dinámicas -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Columna Derecha -->
+        <aside class="space-y-6">
+            <section id="recommendations" class="bg-blue-50 p-6 rounded-lg shadow border-l-4 border-blue-500">
+                <h2 class="text-lg font-semibold text-blue-800 mb-3">Recomendaciones</h2>
+                <ul id="activity-list" class="mt-4 list-disc list-inside text-sm text-gray-600">
+                    <li>Busca una ciudad para ver recomendaciones.</li>
+                </ul>
+            </section>
+            
+            <section id="history-section" class="bg-white p-6 rounded-lg shadow">
+                 <h2 class="text-lg font-semibold mb-3">Historial</h2>
+                 <ul id="history-list" class="space-y-2"></ul>
+            </section>
+        </aside>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center text-sm">
+        <p>&copy; 2026 WeatherTravel App.</p>
+    </footer>
+</body>
+</html>
