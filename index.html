@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,56 +7,69 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Clima</title>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
-    <header class="bg-black text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Weather App</h1>
-            <nav><button class="hover:underline">Inicio</button></nav>
-        </div>
+<body class="bg-slate-900 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+
+    <!-- Header y Buscador (Arriba del todo) -->
+    <header class="w-full py-8 text-center space-y-6 container mx-auto px-4">
+        <h1 class="text-4xl font-light tracking-wide text-cyan-400">Weather</h1>
+        
+        <form id="search-form" class="relative group w-full max-w-md mx-auto z-10">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="text" id="city-input" 
+                class="block w-full p-4 pl-10 text-sm text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder-gray-500 shadow-lg transition-all" 
+                placeholder="Buscar ciudad..." required>
+            <button type="submit" class="absolute right-2.5 bottom-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-full text-sm px-4 py-2 transition-colors">Ver</button>
+        </form>
     </header>
 
-    <main class="flex-grow container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Columna Izquierda-->
-        <div class="md:col-span-2 space-y-6">
-            <section id="search-section" class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Buscar Ciudad</h2>
-                <!-- Quitamos onclick del botón, lo manejaremos con submit del form -->
-                <form id="search-form" class="flex gap-2">
-                    <input type="text" id="city-input" placeholder="Ej: Madrid, Buenos Aires..." class="flex-grow border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition">Buscar</button>
-                </form>
-            </section>
-
-            <section id="current-weather" class="bg-white p-6 rounded-lg shadow hidden">
-               <!-- Contenido dinámico se llenará aquí -->
-            </section>
-
-            <section id="forecast" class="bg-white p-6 rounded-lg shadow hidden">
-                <h2 class="text-xl font-semibold mb-4">Pronóstico 5 Días</h2>
-                <div id="forecast-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    <!-- Cards dinámicas -->
-                </div>
-            </section>
-        </div>
-
-        <!-- Columna Derecha -->
-        <aside class="space-y-6">
-            <section id="recommendations" class="bg-blue-50 p-6 rounded-lg shadow border-l-4 border-blue-500">
-                <h2 class="text-lg font-semibold text-blue-800 mb-3">Recomendaciones</h2>
-                <ul id="activity-list" class="mt-4 list-disc list-inside text-sm text-gray-600">
-                    <li>Busca una ciudad para ver recomendaciones.</li>
+    <!-- 3 columnas -->
+    <main id="main-content" class="flex-grow container mx-auto px-4 pb-10 hidden animate-fade-in-up">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            
+            <!-- recomendaciones -->
+            <section id="recommendations" class="bg-slate-800/50 backdrop-blur-sm p-6 rounded-3xl border border-slate-700 lg:col-span-1 order-2 lg:order-1 h-full">
+                <h3 class="text-lg font-medium text-cyan-400 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Recomendaciones
+                </h3>
+                <ul id="activity-list" class="space-y-3 text-sm text-gray-300">
+                    <!-- aqui va la lista -->
                 </ul>
             </section>
-            
-            <section id="history-section" class="bg-white p-6 rounded-lg shadow">
-                 <h2 class="text-lg font-semibold mb-3">Historial</h2>
-                 <ul id="history-list" class="space-y-2"></ul>
+
+            <!-- clima -->
+            <section id="current-weather" class="lg:col-span-1 order-1 lg:order-2">
+
             </section>
-        </aside>
+
+            <!-- forecast -->
+            <section id="forecast" class="bg-slate-800/50 backdrop-blur-sm p-6 rounded-3xl border border-slate-700 lg:col-span-1 order-3 lg:order-3 h-full">
+                <h3 class="text-lg font-medium text-gray-300 mb-4 border-b border-slate-700 pb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Próximos días
+                </h3>
+                <div id="forecast-grid" class="space-y-3">
+                
+                </div>
+            </section>
+
+        </div>
+
     </main>
 
-    <footer class="bg-gray-800 text-white p-4 text-center text-sm">
-        <p>&copy; 2026 WeatherTravel App.</p>
+    <footer class="py-6 text-center text-slate-600 text-xs mt-auto">
+        <p>&copy; 2026 Weather App</p>
     </footer>
+
+    <style>
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </body>
 </html>
