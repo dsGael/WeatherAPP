@@ -31,7 +31,6 @@ searchForm.addEventListener('submit', (e) => {
     }
 });
 
-// --- LÓGICA DE AUTOCOMPLETADO ---
 let debounceTimer;
 
 cityInput.addEventListener('input', (e) => {
@@ -46,10 +45,9 @@ cityInput.addEventListener('input', (e) => {
 
     debounceTimer = setTimeout(() => {
         fetchCitySuggestions(value);
-    }, 300); // 300ms de espera
+    }, 300); // 300ms 
 });
 
-// Cerrar lista al hacer click fuera
 document.addEventListener('click', (e) => {
     if (!searchForm.contains(e.target)) {
         autocompleteList.classList.add('hidden');
@@ -58,7 +56,6 @@ document.addEventListener('click', (e) => {
 
 async function fetchCitySuggestions(query) {
     try {
-        // Usamos fetchWithRetry para aprovechar tu circuit breaker aquí también
         const res = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`);
         const cities = await res.json();
         
@@ -90,7 +87,7 @@ function showSuggestions(cities) {
         li.addEventListener('click', () => {
             cityInput.value = city.name;
             autocompleteList.classList.add('hidden');
-            fetchWeatherData(city.name); 
+            fetchWeatherData(city); 
         });
         
         autocompleteList.appendChild(li);
@@ -99,21 +96,28 @@ function showSuggestions(cities) {
     autocompleteList.classList.remove('hidden');
 }
 
-async function fetchWeatherData(city) {
+async function fetchWeatherData(cityOrData) {
     loadingSpinner.classList.remove('hidden');
     mainContent.classList.add('hidden'); 
     
     try {
-        const geoRes = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
-        const geoData = await geoRes.json();
+        let lat, lon, name, country;
 
-        if (!geoData.length) {
-            alert("Ciudad no encontrada");
-            loadingSpinner.classList.add('hidden');
-            return;
+        if (typeof cityOrData === 'object' && cityOrData !== null) {
+            ({ lat, lon, name, country } = cityOrData);
+        } else {
+            const geoRes = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityOrData)}&limit=1&appid=${API_KEY}`);
+            const geoData = await geoRes.json();
+
+            if (!geoData.length) {
+                alert("Ciudad no encontrada");
+                loadingSpinner.classList.add('hidden');
+                return;
+            }
+
+            ({ lat, lon, name, country } = geoData[0]);
         }
 
-        const { lat, lon, name, country } = geoData[0];
 
         currentCityData = { city: name, country, lat, lon };
 
@@ -329,9 +333,9 @@ window.removeFavorite = (index) => {
     showFavorites();
 };
 
-window.searchHistorial = (city) => {
-    cityInput.value = city; 
-    fetchWeatherData(city);
+window.searchHistorial = (cityInputParam) => {
+    cityInput.value = cityInputParam; 
+    fetchWeatherData(cityInputParam);
 };
 
 
