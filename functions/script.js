@@ -261,7 +261,7 @@ function Recommendations(mainWeather) {
             activities = ["Haz ejercicio", "Visita un parque", "Sal a comer con amigos", "Tomate unas bien muertas","Bebidas heladass", "Usa shorts"];
             break;
         case 'clouds':
-            activities = ["Coffe trip", "Visitas culturales", "Sal a correr", "Pasea a tu perro", "Visita un museo", "Ve de compras"];
+            activities = ["Cofee trip", "Visitas culturales", "Sal a correr", "Pasea a tu perro", "Visita un museo", "Ve de compras"];
             break;
         case 'rain':
         case 'drizzle':
@@ -277,8 +277,8 @@ function Recommendations(mainWeather) {
 
     activityList.innerHTML = activities.map(act => 
         `<li class="flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition">
-            <span class="text-cyan-400 text-lg">•</span> 
-            <span class="text-slate-200 text-sm">${act}</span>
+            <span class="text-cyan-400 text-m">•</span> 
+            <span class="text-slate-200 text-base">${act}</span>
         </li>`
     ).join('');
 }
