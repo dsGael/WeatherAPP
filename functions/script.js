@@ -80,7 +80,6 @@ function showSuggestions(cities) {
         const li = document.createElement('li');
         li.className = "px-4 py-3 hover:bg-slate-700 cursor-pointer text-slate-200 border-b border-slate-700/50 last:border-0 flex justify-between items-center";
         
-        // Texto con Nombre, Estado (si hay) y Bandera del país (opcional, solo código)
         const locationText = `${city.name}${city.state ? `, ${city.state}` : ''}`;
         
         li.innerHTML = `
@@ -91,7 +90,7 @@ function showSuggestions(cities) {
         li.addEventListener('click', () => {
             cityInput.value = city.name;
             autocompleteList.classList.add('hidden');
-            fetchWeatherData(city.name); // Busca directamente al hacer click
+            fetchWeatherData(city.name); 
         });
         
         autocompleteList.appendChild(li);
@@ -101,9 +100,8 @@ function showSuggestions(cities) {
 }
 
 async function fetchWeatherData(city) {
-    // 1. Mostrar loading y OCULTAR todo el contenido principal
     loadingSpinner.classList.remove('hidden');
-    mainContent.classList.add('hidden'); // CAMBIO: Usamos 'hidden' en vez de opacidad
+    mainContent.classList.add('hidden'); 
     
     try {
         const geoRes = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
@@ -111,10 +109,7 @@ async function fetchWeatherData(city) {
 
         if (!geoData.length) {
             alert("Ciudad no encontrada");
-            // Si falla, ocultamos loading pero no mostramos contenido vacío (o podrías mostrarlo si quieres volver al estado anterior)
             loadingSpinner.classList.add('hidden');
-            // Opcional: Si quieres que vuelva a aparecer lo anterior en caso de error:
-            // mainContent.classList.remove('hidden'); 
             return;
         }
 
@@ -145,17 +140,13 @@ async function fetchWeatherData(city) {
         Recommendations(weatherData.weather[0].main);
         showSearchHistory();
 
-        // 2. Al terminar con éxito, mostramos el contenido de nuevo
         mainContent.classList.remove('hidden');
 
     } catch (error) {
         console.error("Error:", error);
         alert(error.message || "Hubo un error de conexión.");
-        // En caso de error, decidimos si mostramos de nuevo el contenido anterior o no.
-        // Por consistencia, si hay error, quizás quieras volver a mostrar lo que había antes:
         mainContent.classList.remove('hidden'); 
     } finally {
-        // Ocultar loading SIEMPRE
         loadingSpinner.classList.add('hidden');
     }
 }
@@ -172,7 +163,7 @@ likeBtn.addEventListener('click', () => {
         showFavorites();
         
         likeBtn.textContent = "⭐ Guardado";
-        //setTimeout(() => likeBtn.textContent = "⭐ Like", 2000);
+        setTimeout(() => likeBtn.textContent = "⭐ Like", 2000);
     } else {
         alert("Esta ciudad ya está en favoritos");
     }
@@ -267,21 +258,21 @@ function Recommendations(mainWeather) {
     
     switch(mainWeather.toLowerCase()){
         case 'clear':
-            activities = ["☀️ Ve a correr al parque", "📷 Haz fotos a la ciudad", "🕶️ Paseo con gafas de sol"];
+            activities = ["Haz ejercicio", "Visita un parque", "Sal a comer con amigos", "Tomate unas bien muertas","Bebidas heladass", "Usa shorts"];
             break;
         case 'clouds':
-            activities = ["☁️ Ideal para cafeterías", "🏛️ Visita un museo", "🚲 Paseo con brisa"];
+            activities = ["Coffe trip", "Visitas culturales", "Sal a correr", "Pasea a tu perro", "Visita un museo", "Ve de compras"];
             break;
         case 'rain':
         case 'drizzle':
         case 'thunderstorm':
-            activities = ["☔ Cine o Netflix", "🍜 Cocina algo rico", "📚 Lee un libro"];
+            activities = ["Ver peliculas ", "Cocinar en casa", "Café y un libro", "Juegos de mesa"];
             break;
         case 'snow':
-            activities = ["⛄ Haz un muñeco", "🧤 Abrígate mucho", "☕ Bebida caliente"];
+            activities = ["Juega en la nieve", "Mantente abrigado", "Tomate un té o un café caliente"];
             break;
         default:
-            activities = ["🏙️ Explora el centro", "🍽️ Cena local"];
+            activities = ["Chillear", "Banquetear"];
     }
 
     activityList.innerHTML = activities.map(act => 
@@ -292,15 +283,7 @@ function Recommendations(mainWeather) {
     ).join('');
 }
 
-const actividades={
-    "clear": ["☀️ Ve a correr al parque", "📷 Haz fotos a la ciudad", "🕶️ Paseo con gafas de sol"],
-    "clouds": ["☁️ Ideal para cafeterías", "🏛️ Visita un museo", "🚲 Paseo con brisa"],
-    "rain": ["☔ Cine o Netflix", "🍜 Cocina algo rico", "📚 Lee un libro"],
-    "drizzle": ["☔ Cine o Netflix", "🍜 Cocina algo rico", "📚 Lee un libro"],
-    "thunderstorm": ["☔ Cine o Netflix", "🍜 Cocina algo rico", "📚 Lee un libro"],
-    "snow": ["⛄ Haz un muñeco", "🧤 Abrígate mucho", "☕ Bebida caliente"],
-    "default": ["🏙️ Explora el centro", "🍽️ Cena local"]
-}
+
 
 function showSearchHistory() {
     if (historial.length === 0) {
