@@ -7,21 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Clima</title>
 </head>
-<body class="bg-slate-900 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+<body class=" flex bg-slate-900 text-gray-100 min-h-screen  flex-col font-sans selection:bg-cyan-500 selection:text-white">
 
-    <!-- Header y Buscador (Arriba del todo) -->
-    <header class="w-full py-8 text-center space-y-6 container mx-auto px-4">
+    <header class=" w-full py-8 text-center space-y-6 container mx-auto px-4">
         <h1 class="text-4xl font-light tracking-wide text-cyan-400">Weather</h1>
         
-        <form id="search-form" class="relative group w-full max-w-md mx-auto z-10">
+        <div class="flex items-center gap-4 justify-center">
+        <form id="search-form" class="relative group w-full max-w-md z-10">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
             <input type="text" id="city-input" 
-                class="block w-full p-4 pl-10 text-sm text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder-gray-500 shadow-lg transition-all" 
-                placeholder="Buscar ciudad..." required>
+            class="block w-full p-4 pl-10 text-sm text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder-gray-500 shadow-lg transition-all" 
+            placeholder="Buscar ciudad..." required autocomplete="off">
             <button type="submit" class="absolute right-2.5 bottom-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-full text-sm px-4 py-2 transition-colors">Ver</button>
+            
+            <!-- Lista de autocompletado nueva -->
+            <ul id="autocomplete-list" class="absolute w-full bg-slate-800 border border-slate-700 rounded-xl mt-2 shadow-xl z-50 hidden max-h-60 overflow-y-auto"></ul>
         </form>
+
+        <!-- Nuevo Spinner de carga -->
+        <div id="loading-spinner" class="hidden absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+             <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyan-500"></div>
+        </div>
+
+        <button id="like-btn" class="rounded-full bg-slate-800 p-4 flex-shrink-0 hover:bg-slate-700 transition">⭐ Like</button>
+        </div>
     </header>
 
     <!-- 3 columnas -->
@@ -57,6 +68,19 @@
             </section>
 
         </div>
+
+        <div class="grid grid-cols-2 gap-6">
+            <div>
+                <p class="text-2xl font-semibold text-cyan-400 mt-8 p-10 text-center">Historial</p>
+                <div id="historial" class="animate-fade-in-up">     </div>
+            </div>
+
+            <div>
+                <p class="text-2xl font-semibold text-cyan-400 mt-8 p-10 text-center">Favoritos</p>
+                <div id="favoritos" class="animate-fade-in-up">     </div>
+            </div>
+        </div>
+
 
     </main>
 

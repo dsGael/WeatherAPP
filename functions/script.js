@@ -6,44 +6,177 @@ const mainContent = document.getElementById('main-content');
 const currentWeatherSection = document.getElementById('current-weather');
 const forecastGrid = document.getElementById('forecast-grid'); 
 const activityList = document.getElementById('activity-list'); 
+const autocompleteList = document.getElementById('autocomplete-list');
+const divHistorial = document.getElementById('historial');
+const divFavoritos = document.getElementById('favoritos');
+const likeBtn = document.getElementById('like-btn');
+const loadingSpinner = document.getElementById('loading-spinner');
+
+let currentCityData = null;
+
+const historial= JSON.parse(localStorage.getItem('historial')) || [];
+const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+localStorage.setItem('historial', JSON.stringify(historial));
+
+showSearchHistory();
+showFavorites();
 
 searchForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const city = cityInput.value.trim();
     if (city) {
         fetchWeatherData(city);
+        autocompleteList.classList.add('hidden'); // Ocultar al buscar
     }
 });
 
-async function fetchWeatherData(city) {
+// --- LÓGICA DE AUTOCOMPLETADO ---
+let debounceTimer;
+
+cityInput.addEventListener('input', (e) => {
+    const value = e.target.value.trim();
+    
+    clearTimeout(debounceTimer);
+    
+    if (value.length < 3) {
+        autocompleteList.classList.add('hidden');
+        return;
+    }
+
+    debounceTimer = setTimeout(() => {
+        fetchCitySuggestions(value);
+    }, 300); // 300ms de espera
+});
+
+// Cerrar lista al hacer click fuera
+document.addEventListener('click', (e) => {
+    if (!searchForm.contains(e.target)) {
+        autocompleteList.classList.add('hidden');
+    }
+});
+
+async function fetchCitySuggestions(query) {
     try {
-        const geoRes = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
+        // Usamos fetchWithRetry para aprovechar tu circuit breaker aquí también
+        const res = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`);
+        const cities = await res.json();
+        
+        showSuggestions(cities);
+    } catch (error) {
+        console.error("Error autocompletado:", error);
+    }
+}
+
+function showSuggestions(cities) {
+    autocompleteList.innerHTML = '';
+    
+    if (cities.length === 0) {
+        autocompleteList.classList.add('hidden');
+        return;
+    }
+
+    cities.forEach(city => {
+        const li = document.createElement('li');
+        li.className = "px-4 py-3 hover:bg-slate-700 cursor-pointer text-slate-200 border-b border-slate-700/50 last:border-0 flex justify-between items-center";
+        
+        // Texto con Nombre, Estado (si hay) y Bandera del país (opcional, solo código)
+        const locationText = `${city.name}${city.state ? `, ${city.state}` : ''}`;
+        
+        li.innerHTML = `
+            <span>${locationText}</span>
+            <span class="text-xs text-slate-500 font-bold bg-slate-900 px-2 py-1 rounded">${city.country}</span>
+        `;
+        
+        li.addEventListener('click', () => {
+            cityInput.value = city.name;
+            autocompleteList.classList.add('hidden');
+            fetchWeatherData(city.name); // Busca directamente al hacer click
+        });
+        
+        autocompleteList.appendChild(li);
+    });
+
+    autocompleteList.classList.remove('hidden');
+}
+
+async function fetchWeatherData(city) {
+    // 1. Mostrar loading y OCULTAR todo el contenido principal
+    loadingSpinner.classList.remove('hidden');
+    mainContent.classList.add('hidden'); // CAMBIO: Usamos 'hidden' en vez de opacidad
+    
+    try {
+        const geoRes = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
         const geoData = await geoRes.json();
 
         if (!geoData.length) {
             alert("Ciudad no encontrada");
+            // Si falla, ocultamos loading pero no mostramos contenido vacío (o podrías mostrarlo si quieres volver al estado anterior)
+            loadingSpinner.classList.add('hidden');
+            // Opcional: Si quieres que vuelva a aparecer lo anterior en caso de error:
+            // mainContent.classList.remove('hidden'); 
             return;
         }
 
         const { lat, lon, name, country } = geoData[0];
 
+        currentCityData = { city: name, country, lat, lon };
+
+         if (!historial.some(item => item.city === name && item.country === country)) {
+            historial.unshift({ city: name, country, lat, lon }); 
+            if (historial.length > 5) historial.pop();
+
+            localStorage.setItem('historial', JSON.stringify(historial));
+         }
+         console.log(JSON.parse(localStorage.getItem('historial')));
+
         const [weatherRes, forecastRes] = await Promise.all([
-            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`),
-            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`)
+            fetchWithRetry(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`),
+            fetchWithRetry(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`)
         ]);
 
         const weatherData = await weatherRes.json();
         const forecastData = await forecastRes.json();
 
+
+
         CurrentWeather(weatherData, name, country);
         Forecast(forecastData);
         Recommendations(weatherData.weather[0].main);
+        showSearchHistory();
+
+        // 2. Al terminar con éxito, mostramos el contenido de nuevo
+        mainContent.classList.remove('hidden');
 
     } catch (error) {
         console.error("Error:", error);
+        alert(error.message || "Hubo un error de conexión.");
+        // En caso de error, decidimos si mostramos de nuevo el contenido anterior o no.
+        // Por consistencia, si hay error, quizás quieras volver a mostrar lo que había antes:
+        mainContent.classList.remove('hidden'); 
+    } finally {
+        // Ocultar loading SIEMPRE
+        loadingSpinner.classList.add('hidden');
     }
 }
 
+likeBtn.addEventListener('click', () => {
+    if (!currentCityData) {
+        alert("Primero busca una ciudad");
+        return;
+    }
+
+    if (!favorites.some(fav => fav.city === currentCityData.city && fav.country === currentCityData.country)) {
+        favorites.push(currentCityData);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        showFavorites();
+        
+        likeBtn.textContent = "⭐ Guardado";
+        //setTimeout(() => likeBtn.textContent = "⭐ Like", 2000);
+    } else {
+        alert("Esta ciudad ya está en favoritos");
+    }
+});
 
 function CurrentWeather(data, name, country) {
     mainContent.classList.remove('hidden');
@@ -111,7 +244,7 @@ function Forecast(data) {
 
     dailyForecasts.forEach(day => {
         const date = new Date(day.dt * 1000);
-        const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' }); // Cambié a 'short' para que quepa mejor
+        const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' }); 
         const temp = Math.round(day.main.temp);
         const icon = day.weather[0].icon;
 
@@ -159,7 +292,6 @@ function Recommendations(mainWeather) {
     ).join('');
 }
 
-
 const actividades={
     "clear": ["☀️ Ve a correr al parque", "📷 Haz fotos a la ciudad", "🕶️ Paseo con gafas de sol"],
     "clouds": ["☁️ Ideal para cafeterías", "🏛️ Visita un museo", "🚲 Paseo con brisa"],
@@ -168,6 +300,115 @@ const actividades={
     "thunderstorm": ["☔ Cine o Netflix", "🍜 Cocina algo rico", "📚 Lee un libro"],
     "snow": ["⛄ Haz un muñeco", "🧤 Abrígate mucho", "☕ Bebida caliente"],
     "default": ["🏙️ Explora el centro", "🍽️ Cena local"]
+}
+
+function showSearchHistory() {
+    if (historial.length === 0) {
+        divHistorial.innerHTML = '<li class="p-3 text-slate-500">No hay búsquedas recientes</li>';
+    } else {
+        divHistorial.innerHTML = historial.map(item => 
+            `
+            <button onclick="searchHistorial('${item.city}')" class="p-1 w-full text-left">
+                <li class="flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition cursor-pointer" data-lat="${item.lat}" data-lon="${item.lon}">
+                    <span class="text-cyan-400 text-lg">•</span> 
+                    <span class="text-slate-200 text-sm">${item.city}, ${item.country}</span>
+                </li>
+            </button>`
+        ).join('');
+
+    }
+}
+
+function showFavorites() {
+    if (favorites.length === 0) {
+        divFavoritos.innerHTML = '<p class="p-3 text-slate-500 text-center text-sm">No tienes favoritos aún</p>';
+        return;
+    }
+
+    divFavoritos.innerHTML = favorites.map((item, index) => `
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="searchHistorial('${item.city}')" class="flex-grow text-left">
+                <div class="flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl hover:bg-slate-700/50 transition cursor-pointer border border-transparent hover:border-cyan-500/30">
+                    <span class="text-yellow-400 text-lg">★</span> 
+                    <span class="text-slate-200 text-sm font-medium">${item.city}, ${item.country}</span>
+                </div>
+            </button>
+            <button onclick="removeFavorite(${index})" class="p-3 text-slate-400 hover:text-red-400 hover:bg-slate-700/50 rounded-xl transition" title="Borrar">
+                ✕
+            </button>
+        </div>
+    `).join('');
+}
+
+window.removeFavorite = (index) => {
+    favorites.splice(index, 1);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    showFavorites();
+};
+
+window.searchHistorial = (city) => {
+    cityInput.value = city; 
+    fetchWeatherData(city);
+};
 
 
+const circuitBreaker = {
+    failures: 0,           
+    threshold: 3,          
+    openUntil: 0,         
+    timeout: 30000,         
+
+    isOpen() {
+        if (Date.now() < this.openUntil) return true;
+        
+        if (this.openUntil !== 0) {
+            this.reset();
+        }
+        return false;
+    },
+
+    recordFailure() {
+        this.failures++;
+        if (this.failures >= this.threshold) {
+            this.openUntil = Date.now() + this.timeout;
+            console.warn("⚠️ Circuit Breaker ABIERTO. Pausando peticiones por 30s.");
+        }
+    },
+
+    reset() {
+        this.failures = 0;
+        this.openUntil = 0;
+        console.log("✅ Circuit Breaker CERRADO. Reanudando peticiones.");
+    }
+};
+
+async function fetchWithRetry(url, retries = 3, backoff = 1000) {
+    if (circuitBreaker.isOpen()) {
+        const remaining = Math.ceil((circuitBreaker.openUntil - Date.now()) / 1000);
+        throw new Error(`Servicio temporalmente no disponible. Intenta en ${remaining}s.`);
+    }
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                if (response.status >= 500) throw new Error(`Error servidor: ${response.status}`);
+                return response; 
+            }
+
+            circuitBreaker.reset(); 
+            return response;
+
+        } catch (error) {
+            console.warn(`Intento ${i + 1} fallido: ${error.message}`);
+            
+            if (i === retries - 1) {
+                circuitBreaker.recordFailure();
+                throw error;
+            }
+
+            await new Promise(res => setTimeout(res, backoff * (i + 1))); 
+        }
+    }
 }
