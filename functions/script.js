@@ -265,7 +265,7 @@ function Recommendations(mainWeather) {
             activities = ["Haz ejercicio", "Visita un parque", "Sal a comer con amigos", "Tomate unas bien muertas","Bebidas heladass", "Usa shorts"];
             break;
         case 'clouds':
-            activities = ["Cofee trip", "Visitas culturales", "Sal a correr", "Pasea a tu perro", "Visita un museo", "Ve de compras"];
+            activities = ["Coffee trip", "Visitas culturales", "Sal a correr", "Pasea a tu perro", "Visita un museo", "Ve de compras"];
             break;
         case 'rain':
         case 'drizzle':
