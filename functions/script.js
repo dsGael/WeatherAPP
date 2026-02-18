@@ -1,4 +1,4 @@
-import { API_KEY } from "./env.js";
+// ELIMINAR O COMENTAR ESTA LÍNEA: import { API_KEY } from "./env.js";
 
 const searchForm = document.getElementById('search-form');
 const cityInput = document.getElementById('city-input');
@@ -58,8 +58,9 @@ document.addEventListener('click', (e) => {
 
 async function fetchCitySuggestions(query) {
     try {
-        // Usamos fetchWithRetry para aprovechar tu circuit breaker aquí también
-        const res = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`);
+        // Cambiamos la URL para apuntar a tu API local
+        // type=geo le dice a tu config.js que busque coordenadas
+        const res = await fetchWithRetry(`/api/config?type=geo&q=${encodeURIComponent(query)}`);
         const cities = await res.json();
         
         showSuggestions(cities);
@@ -104,7 +105,8 @@ async function fetchWeatherData(city) {
     mainContent.classList.add('hidden'); 
     
     try {
-        const geoRes = await fetchWithRetry(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
+        // Paso 1: Obtener coordenadas (GEO) a través de tu API
+        const geoRes = await fetchWithRetry(`/api/config?type=geo&q=${encodeURIComponent(city)}`);
         const geoData = await geoRes.json();
 
         if (!geoData.length) {
@@ -125,9 +127,19 @@ async function fetchWeatherData(city) {
          }
          console.log(JSON.parse(localStorage.getItem('historial')));
 
+        // Paso 2: Obtener Clima y Pronóstico a través de tu API
+        // Usamos type=weather y type=forecast
         const [weatherRes, forecastRes] = await Promise.all([
-            fetchWithRetry(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`),
-            fetchWithRetry(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${API_KEY}`)
+            fetchWithRetry(`/api/config?type=weather&lat=${
+                lat
+            }&lon=${
+                lon
+            }&units=metric&lang=es&appid=${API_KEY}`),
+            fetchWithRetry(`/api/config?type=forecast&lat=${
+                lat
+            }&lon=${
+                lon
+            }&units=metric&lang=es&appid=${API_KEY}`)
         ]);
 
         const weatherData = await weatherRes.json();
